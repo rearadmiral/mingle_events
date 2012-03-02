@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-require 'rake'
 
 Gem::Specification.new do |s|
   s.name = %q{mingle_events}
@@ -17,13 +16,13 @@ Gem::Specification.new do |s|
   }
   s.email = %q{david.rice at gmail dot com}
   s.extra_rdoc_files = ["LICENSE.txt", "README.textile"]
-  s.files = FileList[
+  s.files = Dir[
     "Gemfile", 
     "lib/**/*.rb",
     "LICENSE.txt",
     "README.textile",
     "test/**/*.rb"
-  ].to_a
+  ]
   s.homepage = %q{https://github.com/ThoughtWorksStudios/mingle_events}
   s.rdoc_options = ["--line-numbers", "--inline-source", "--title", "mingle_events", "--main", "README.textile"]
   s.require_paths = ["lib"]
