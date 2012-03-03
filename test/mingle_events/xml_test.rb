@@ -50,15 +50,31 @@ module MingleEvents
     end
 
     def test_serialize_to_xml_with_namespace
-      xml_with_ns = '<a xmlns="http://www.w3.org/2005/Atom" xmlns:foo="http://www.foo.com"> <foo:b>s</foo:b> </a>'
-      ns = {'atom' => "http://www.w3.org/2005/Atom", 'foo' => "http://www.foo.com"}
-      assert_equal_ignore_spaces('<foo:b xmlns:foo="http://www.foo.com">s</foo:b>', Xml.parse(xml_with_ns, ns).select("/atom:a/foo:b").raw_xml)
+      xml_with_ns = %{
+        <a xmlns="http://www.foo.com" xmlns:bar="http://www.bar.com">
+           <b>
+             <bar:c>
+                 s
+             </bar:c>
+           </b>
+        </a>
+      }
+      ns = {'foo' => "http://www.foo.com", 'bar' => "http://www.bar.com"}
+      serialized = Xml.parse(xml_with_ns, ns).select("/foo:a/foo:b").raw_xml
+      assert_equal_ignore_spaces(%{
+          <b xmlns="http://www.foo.com" xmlns:bar="http://www.bar.com">
+             <bar:c>
+               s
+             </bar:c>
+          </b>
+      }, serialized)
+      assert_equal 's',  Xml.parse(serialized, ns).select("/foo:b/bar:c").inner_text.strip
     end
 
     private
 
     def assert_equal_ignore_spaces(expected, actual)
-      assert_equal(expected.gsub(/\B/, ''), actual.gsub(/\B/, ''))
+      assert_equal(expected.gsub(/[ |\n]/, ''), actual.gsub(/[ |\n]/, ''))
     end
   end
 end

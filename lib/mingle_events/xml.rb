@@ -59,12 +59,7 @@ module MingleEvents
     end
 
     def raw_xml(element)
-      if node = element.node && element.node.clone
-        if node.namespace
-          node.add_namespace(node.namespace.prefix, node.namespace.href)
-        end
-        node.to_s
-      end
+      patching_namespaces(element.node).to_s
     end
 
     def attributes(element)
@@ -90,6 +85,17 @@ module MingleEvents
       end
 
       hash
+    end
+
+    def patching_namespaces(node)
+      ns_scopes = node.namespace_scopes
+      return node if ns_scopes.empty?
+
+      result = node.clone
+      ns_scopes.each do |ns|
+        result.add_namespace_definition(ns.prefix, ns.href)
+      end
+      result
     end
   end
 end
