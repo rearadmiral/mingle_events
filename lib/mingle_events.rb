@@ -8,6 +8,7 @@ require 'rubygems'
 require 'nokogiri'
 require 'active_support'
 require 'active_support/core_ext'
+require 'zip/zip'
 
 require File.expand_path(File.join(File.dirname(__FILE__), 'mingle_events', 'feed'))
 require File.expand_path(File.join(File.dirname(__FILE__), 'mingle_events', 'xml'))

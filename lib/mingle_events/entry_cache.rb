@@ -1,7 +1,7 @@
 module MingleEvents
   class EntryCache
     def initialize(root_dir)
-      @dir = Directory.new(root_dir)
+      @dir = ZipDirectory.new(root_dir)
     end
         
     def all_entries
@@ -24,7 +24,7 @@ module MingleEvents
     def write(entry, next_entry)
       file = file_for_entry(entry)
       file_content = {:entry_xml => entry.raw_xml, :next_entry_file_path => file_for_entry(next_entry)}
-      @dir.with_file(file, 'w') {|out| YAML.dump(file_content, out)}
+      @dir.write_file(file) {|out| YAML.dump(file_content, out)}
     end
     
     def has_current_state?
@@ -43,7 +43,7 @@ module MingleEvents
       if current_state[:first_fetched_entry_info_file].nil?
         current_state.merge!(:first_fetched_entry_info_file => file_for_entry(oldest_new_entry))
       end
-      @dir.with_file(current_state_file, 'w') { |out| YAML.dump(current_state, out)  }
+      @dir.write_file(current_state_file) { |out| YAML.dump(current_state, out)  }
     end
     
     def clear
@@ -54,7 +54,7 @@ module MingleEvents
     
     def load_current_state
       if has_current_state?
-        YAML.load(@dir.file(current_state_file))
+        @dir.file(current_state_file) { |f| YAML.load(f) }
       else
         {:last_fetched_entry_info_file => nil, :first_fetched_entry_info_file => nil}
       end
@@ -66,7 +66,7 @@ module MingleEvents
     
     def current_state_entry(info_file_key)
       if info_file = load_current_state[info_file_key]
-        Feed::Entry.from_snippet(YAML.load(@dir.file(info_file))[:entry_xml])
+        Feed::Entry.from_snippet((@dir.file(info_file) { |f| YAML.load(f) })[:entry_xml])
       end
     end
     
@@ -79,27 +79,32 @@ module MingleEvents
       relative_path_parts = relative_path_parts[0..-2] + insertions + ["#{entry_id_int}.yml"]  
       File.join(*relative_path_parts)
     end
+    
+    class ZipDirectory
 
-    class Directory
       def initialize(name)
+        FileUtils.mkdir_p(File.dirname(name))
         @root = name
       end
 
-      def with_file(path, mode='r', &block)
-        FileUtils.mkdir_p(File.dirname(to_absolute(path)))
-        File.open(to_absolute(path), mode) {|f| yield(f) }
+      def write_file(path, &block)
+        open do |zipfile|
+          zipfile.mkdir(File.dirname(path)) unless zipfile.find_entry(File.dirname(path))
+          zipfile.get_output_stream(path) { |f| yield(f) }
+        end
       end
 
-      def file(path)
-        File.new(to_absolute(path))
+      def file(path, &block)
+        open do |zipfile|
+          zipfile.get_input_stream(path) { |f| yield(f) }
+        end
       end
 
       def exists?(path)
-        File.exist?(to_absolute(path))
-      end
-
-      def same?(a_path, another_path)
-        to_absolute(a_path) == to_absolute(another_path)
+        return unless File.exists?(@root)
+        open do |zipfile|
+          zipfile.find_entry(path)
+        end
       end
 
       def delete
@@ -107,14 +112,15 @@ module MingleEvents
       end
 
       private
-
-      def to_absolute(path)
-        path && File.expand_path(File.join(@root, path))
+      
+      def open(&block)
+        Zip::ZipFile.open(@root, Zip::ZipFile::CREATE) do |zipfile|
+          yield(zipfile)
+        end
       end
     end
     
     class Entries
-      
       include Enumerable
       
       def initialize(state_dir, first_info_file, last_info_file)
@@ -126,9 +132,9 @@ module MingleEvents
       def each(&block)
         current_file = @first_info_file
         while current_file
-          current_entry_info = YAML.load(@dir.file(current_file))
+          current_entry_info = @dir.file(current_file) {|f| YAML.load(f) }
           yield(Feed::Entry.from_snippet(current_entry_info[:entry_xml]))
-          break if @dir.same?(current_file, @last_info_file)
+          break if current_file == @last_info_file
           current_file = current_entry_info[:next_entry_file_path]
         end
       end
