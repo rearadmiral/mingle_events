@@ -5,7 +5,8 @@ module MingleEvents
   # TODO: Update error handling and support of fetching response
   # objects to that of MingleBasicAuthAccess
   class MingleOauthAccess
-
+    attr_reader :base_url
+    
     def initialize(base_url, token)
       @base_url = base_url
       @token = token

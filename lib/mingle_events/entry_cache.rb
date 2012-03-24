@@ -45,6 +45,10 @@ module MingleEvents
       end
       @dir.write_file(current_state_file) { |out| YAML.dump(current_state, out)  }
     end
+
+    def flush
+      @dir.flush
+    end
     
     def clear
       @dir.delete
@@ -85,39 +89,50 @@ module MingleEvents
       def initialize(name)
         FileUtils.mkdir_p(File.dirname(name))
         @root = name
+        @unflushed = 0
+        @zipfile = nil
       end
 
       def write_file(path, &block)
-        open do |zipfile|
-          zipfile.mkdir(File.dirname(path)) unless zipfile.find_entry(File.dirname(path))
-          zipfile.get_output_stream(path) { |f| yield(f) }
+        zipfile.mkdir(File.dirname(path)) unless zipfile.find_entry(File.dirname(path)) 
+        ret = zipfile.get_output_stream(path) { |f| yield(f) }
+        @unflushed += 1
+        if @unflushed >= 1000
+          flush
+          @unflushed = 0
         end
+        ret
       end
 
       def file(path, &block)
-        open do |zipfile|
-          zipfile.get_input_stream(path) { |f| yield(f) }
-        end
+        measure('read') { zipfile.get_input_stream(path) { |f| yield(f) } }
       end
 
       def exists?(path)
         return unless File.exists?(@root)
-        open do |zipfile|
-          zipfile.find_entry(path)
-        end
+        zipfile.find_entry(path)
       end
 
       def delete
         FileUtils.rm_rf(@root)
       end
 
-      private
-      
-      def open(&block)
-        Zip::ZipFile.open(@root, Zip::ZipFile::CREATE) do |zipfile|
-          yield(zipfile)
-        end
+      def flush
+        measure('flush') { @zipfile.commit if @zipfile }
       end
+
+      private
+
+      def measure(label=nil, &block)
+        return yield unless ENV['MINGE_EVENTS_VERBOSE']
+        start = Time.now
+        yield.tap { puts "ZipDirectory##{label}: using #{Time.now - start}s"}
+      end
+
+      def zipfile
+        @zipfile ||= measure('load') { Zip::ZipFile.open(@root, Zip::ZipFile::CREATE) }
+      end
+
     end
     
     class Entries

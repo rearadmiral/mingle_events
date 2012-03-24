@@ -27,6 +27,7 @@ module MingleEvents
     def set_current_state_to_now_if_no_current_state
       return if @entry_cache.has_current_state?
       @entry_cache.set_current_state(page_with_latest_entries.entries.first)
+      @entry_cache.flush
     end
     
     # fetch the latest events from mingle, i.e., the ones not previously seen
@@ -51,6 +52,7 @@ module MingleEvents
       end
                   
       @entry_cache.update_current_state(next_entry, most_recent_new_entry)
+      @entry_cache.flush
       @entry_cache.entries(next_entry, most_recent_new_entry)
     end
     

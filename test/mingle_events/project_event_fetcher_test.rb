@@ -23,7 +23,7 @@ module MingleEvents
       latest_entries = fetcher.fetch_latest
       expected_latest_entries = [98, 99, 100, 101, 103].map{|n| entry(n)}
 
-      assert_equal(expected_latest_entries, latest_entries.to_a)
+      assert_equal(expected_latest_entries.collect(&:entry_id), latest_entries.to_a.collect(&:entry_id))
       assert_equal entry(23), fetcher.first_entry_fetched
       assert_equal entry(103), fetcher.last_entry_fetched
     end
@@ -205,6 +205,7 @@ module MingleEvents
       fetcher.entry_cache.write(first_entry, second_entry)
       fetcher.entry_cache.write(last_entry, nil)  
       fetcher.entry_cache.update_current_state(first_entry, last_entry)
+      fetcher.entry_cache.flush
     end
             
     def entry(entry_id)
