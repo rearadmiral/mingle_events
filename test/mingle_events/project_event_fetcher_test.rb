@@ -205,7 +205,6 @@ module MingleEvents
       fetcher.entry_cache.write(first_entry, second_entry)
       fetcher.entry_cache.write(last_entry, nil)  
       fetcher.entry_cache.update_current_state(first_entry, last_entry)
-      fetcher.entry_cache.flush
     end
             
     def entry(entry_id)

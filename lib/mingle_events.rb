@@ -8,42 +8,8 @@ require 'rubygems'
 require 'nokogiri'
 require 'active_support'
 require 'active_support/core_ext'
-require 'zip/zip'
+require 'archive/tar/minitar'
 
-# rubyzip performance patch: https://github.com/aussiegeek/rubyzip/pull/39
-Zip::ZipFile.class_eval do
-  def find_entry(entry)
-    @entrySet.find_entry(entry)
-  end
-end
-
-Zip::ZipEntrySet.class_eval do
-  def include?(entry)
-    @entrySet.include?(to_key(entry))
-  end
-
-  def find_entry(entry)
-    @entrySet[to_key(entry)]
-  end
-
-  def <<(entry)
-    @entrySet[to_key(entry)] = entry
-  end
-  alias :push :<<
-
-  def delete(entry)
-    @entrySet.delete(to_key(entry)) ? entry : nil
-  end
-
-  def parent(entry)
-    @entrySet[to_key(entry.parent_as_string)]
-  end
-
-  private
-  def to_key(entry)
-    entry.to_s.sub(/\/$/, "")
-  end
-end
 
 require File.expand_path(File.join(File.dirname(__FILE__), 'mingle_events', 'feed'))
 require File.expand_path(File.join(File.dirname(__FILE__), 'mingle_events', 'xml'))
@@ -53,6 +19,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), 'mingle_events', 'min
 require File.expand_path(File.join(File.dirname(__FILE__), 'mingle_events', 'mingle_oauth_access'))
 require File.expand_path(File.join(File.dirname(__FILE__), 'mingle_events', 'processors'))
 require File.expand_path(File.join(File.dirname(__FILE__), 'mingle_events', 'project_custom_properties'))
+require File.expand_path(File.join(File.dirname(__FILE__), 'mingle_events', 'zip_directory'))
 require File.expand_path(File.join(File.dirname(__FILE__), 'mingle_events', 'entry_cache'))
 require File.expand_path(File.join(File.dirname(__FILE__), 'mingle_events', 'project_event_fetcher'))
 

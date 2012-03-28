@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.date = %q{2011-08-05}
   s.add_dependency('nokogiri')
   s.add_dependency('activesupport')
-  s.add_dependency('rubyzip')
+  s.add_dependency('minitar')
   s.description = %q{
     Mingle 3.3 introduced a new Events API in the form of an "Atom feed":http://www.thoughtworks-studios.com/mingle/3.3/help/mingle_api_events.html. The Mingle team and ThoughtWorks Studios are big believers in the use of Atom for exposing events. Atom is a widely used standard, and this event API style puts the issue of robust event delivery in the hands of the consumer, where it belongs. In fact, we'd argue this is the only feasible means of robust, scalable event delivery, short of spending hundreds of thousands or millions of dollars on enterprise buses and such. Atom-delivered events are cheap, scalable, standards-based, and robust.
 

@@ -44,10 +44,7 @@ module MingleEvents
         current_state.merge!(:first_fetched_entry_info_file => file_for_entry(oldest_new_entry))
       end
       @dir.write_file(current_state_file) { |out| YAML.dump(current_state, out)  }
-    end
-
-    def flush
-      @dir.flush
+      @dir.reload
     end
     
     def clear
@@ -58,7 +55,7 @@ module MingleEvents
     
     def load_current_state
       if has_current_state?
-        @dir.file(current_state_file) { |f| YAML.load(f) }
+        @dir.file(current_state_file) { |f| YAML.load(f)}
       else
         {:last_fetched_entry_info_file => nil, :first_fetched_entry_info_file => nil}
       end
@@ -83,58 +80,7 @@ module MingleEvents
       relative_path_parts = relative_path_parts[0..-2] + insertions + ["#{entry_id_int}.yml"]  
       File.join(*relative_path_parts)
     end
-    
-    class ZipDirectory
-
-      def initialize(name)
-        FileUtils.mkdir_p(File.dirname(name))
-        @root = name
-        @unflushed = 0
-        @zipfile = nil
-      end
-
-      def write_file(path, &block)
-        zipfile.mkdir(File.dirname(path)) unless zipfile.find_entry(File.dirname(path)) 
-        ret = zipfile.get_output_stream(path) { |f| yield(f) }
-        @unflushed += 1
-        if @unflushed >= 1000
-          flush
-          @unflushed = 0
-        end
-        ret
-      end
-
-      def file(path, &block)
-        measure('read') { zipfile.get_input_stream(path) { |f| yield(f) } }
-      end
-
-      def exists?(path)
-        return unless File.exists?(@root)
-        zipfile.find_entry(path)
-      end
-
-      def delete
-        FileUtils.rm_rf(@root)
-      end
-
-      def flush
-        measure('flush') { @zipfile.commit if @zipfile }
-      end
-
-      private
-
-      def measure(label=nil, &block)
-        return yield unless ENV['MINGE_EVENTS_VERBOSE']
-        start = Time.now
-        yield.tap { puts "ZipDirectory##{label}: using #{Time.now - start}s"}
-      end
-
-      def zipfile
-        @zipfile ||= measure('load') { Zip::ZipFile.open(@root, Zip::ZipFile::CREATE) }
-      end
-
-    end
-    
+        
     class Entries
       include Enumerable
       

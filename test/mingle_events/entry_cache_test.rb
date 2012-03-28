@@ -12,7 +12,6 @@ module MingleEvents
       fetched_entry = entry(1)
       @entry_cache.write(fetched_entry, nil)
       @entry_cache.update_current_state(fetched_entry, fetched_entry)
-      @entry_cache.flush
       assert_equal [entry(1)], @entry_cache.all_entries.to_a
       assert_equal entry(1), @entry_cache.first
       assert_equal entry(1), @entry_cache.latest
@@ -23,7 +22,6 @@ module MingleEvents
       @entry_cache.write(entry(2), entry(3))
       @entry_cache.write(entry(1), entry(2))
       @entry_cache.update_current_state(entry(1), entry(3))
-      @entry_cache.flush
       assert_equal [entry(1), entry(2), entry(3)], @entry_cache.all_entries.to_a
     end
 
@@ -32,14 +30,12 @@ module MingleEvents
       @entry_cache.write(entry(2), entry(3))
       @entry_cache.write(entry(1), entry(2))
       @entry_cache.update_current_state(entry(1), entry(3))
-      @entry_cache.flush
 
       @entry_cache.write(entry(6), nil)
       @entry_cache.write(entry(5), entry(6))
       @entry_cache.write(entry(4), entry(5))
       @entry_cache.write(entry(3), entry(4))
       @entry_cache.update_current_state(entry(3), entry(6))
-      @entry_cache.flush
 
       assert_equal((1..6).map { |id| entry(id) }, @entry_cache.all_entries.to_a)
     end
