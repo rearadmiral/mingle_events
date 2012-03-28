@@ -13,29 +13,8 @@ module MingleEvents
     end
 
     def fetch_page(location)
-      location = @base_url + location if location[0..0] == '/' 
-      
-      uri = URI.parse(location)
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      headers = {
-        'Authorization' => %{Token token="#{@token}"}
-      }
-
-      path = uri.path
-      path += "?#{uri.query}" if uri.query
-      MingleEvents.log.info "Fetching page at #{path}..."
-      
-      start = Time.now
-      response = http.get(path, headers)
-      MingleEvents.log.info "... #{path} fetched in #{Time.now - start} seconds."
-
-      # todo: what's the right way to raise on non 200 ?
-      # raise StandardError.new(response.body) unless response == Net::HTTPSuccess
-      
-      response.body
+      location  = @base_url + location if location[0..0] == '/' 
+      Http.get(location, 'Authorization' => %{Token token="#{@token}"})
     end
-
   end
 end
