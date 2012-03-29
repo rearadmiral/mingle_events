@@ -10,8 +10,9 @@ a secure HTTPS connection. Instructions for enabling HTTPS/SSL in Mingle can be 
 <http://www.thoughtworks-studios.com/mingle/3.3/help/advanced_mingle_configuration.html>
 WARNING!!
 }
+    MAX_RETRY_TIMES = 5
 
-    def get(url, header={})
+    def get(url, header={}, retry_count=0)
       rsp = fetch_page_response(url, header)
       case rsp
       when Net::HTTPSuccess
@@ -21,6 +22,12 @@ WARNING!!
 If you think you are passing correct credentials, please check 
 that you have enabled Mingle for basic authentication. 
 See <http://www.thoughtworks-studios.com/mingle/3.3/help/configuring_mingle_authentication.html>.})
+      when Net::HTTPBadGateway, HTTPServiceUnavailable, HTTPGatewayTimeOut
+        raise HttpError.new(rsp, url) if retry_count >= MAX_RETRY_TIMES
+        cooldown = retry_count * 2
+        MingleEvents.log.info "Getting service error when get page at #{url}, retry after #{cooldown}s..."
+        sleep cooldown
+        get(url, header, retry_count + 1)
       else
         raise HttpError.new(rsp, url) 
       end     

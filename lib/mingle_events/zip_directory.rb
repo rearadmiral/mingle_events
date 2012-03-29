@@ -86,7 +86,7 @@ module MingleEvents
     end
 
     def measure(label=nil, &block)
-      return yield unless ENV['MINGE_EVENTS_VERBOSE']
+      return yield unless ENV['MINGLE_EVENTS_VERBOSE']
       start = Time.now
       yield.tap { puts "ZipDirectory##{label}: using #{Time.now - start}s"}
     end
