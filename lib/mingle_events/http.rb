@@ -22,7 +22,7 @@ WARNING!!
 If you think you are passing correct credentials, please check 
 that you have enabled Mingle for basic authentication. 
 See <http://www.thoughtworks-studios.com/mingle/3.3/help/configuring_mingle_authentication.html>.})
-      when Net::HTTPBadGateway, HTTPServiceUnavailable, HTTPGatewayTimeOut
+      when Net::HTTPBadGateway, Net::HTTPServiceUnavailable, Net::HTTPGatewayTimeOut
         raise HttpError.new(rsp, url) if retry_count >= MAX_RETRY_TIMES
         cooldown = retry_count * 2
         MingleEvents.log.info "Getting service error when get page at #{url}, retry after #{cooldown}s..."
