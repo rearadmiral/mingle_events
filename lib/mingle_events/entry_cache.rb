@@ -80,9 +80,31 @@ module MingleEvents
       relative_path_parts = relative_path_parts[0..-2] + insertions + ["#{entry_id_int}.yml"]  
       File.join(*relative_path_parts)
     end
-        
+
     class Entries
       include Enumerable
+
+      class Enumerator
+        def initialize(dir, first, last)
+          @dir, @first, @last = dir, first, last
+          @last_pos = :limbo
+          @current_pos = first
+        end
+
+        def next
+          raise StopIteration.new unless has_next?
+          current_entry_info = @dir.file(@current_pos) {|f| YAML.load(f) }
+          Feed::Entry.from_snippet(current_entry_info[:entry_xml]).tap do
+            @last_pos = @current_pos
+            @current_pos = current_entry_info[:next_entry_file_path]
+          end
+        end
+
+        private
+        def has_next?
+          @current_pos && @last_pos != @last
+        end
+      end
       
       def initialize(state_dir, first_info_file, last_info_file)
         @dir = state_dir
@@ -91,14 +113,17 @@ module MingleEvents
       end
           
       def each(&block)
-        current_file = @first_info_file
-        while current_file
-          current_entry_info = @dir.file(current_file) {|f| YAML.load(f) }
-          yield(Feed::Entry.from_snippet(current_entry_info[:entry_xml]))
-          break if current_file == @last_info_file
-          current_file = current_entry_info[:next_entry_file_path]
+        enumerator = Enumerator.new(@dir, @first_info_file, @last_info_file)
+        return enumerator unless block_given?
+        loop do
+          begin
+            yield(enumerator.next)
+          rescue StopIteration
+            break
+          end
         end
       end
     end
+    
   end  
 end

@@ -39,6 +39,18 @@ module MingleEvents
 
       assert_equal((1..6).map { |id| entry(id) }, @entry_cache.all_entries.to_a)
     end
+
+    def test_entries_returned_can_be_lazily_evaluated
+      @entry_cache.write(entry(3), nil)
+      @entry_cache.write(entry(2), entry(3))
+      @entry_cache.write(entry(1), entry(2))
+      @entry_cache.update_current_state(entry(1), entry(3))
+      enumerator = @entry_cache.all_entries.each
+      assert_equal entry(1), enumerator.next()
+      assert_equal entry(2), enumerator.next()
+      assert_equal entry(3), enumerator.next()
+      assert_raise(StopIteration) { enumerator.next() }
+    end
     
     private
     
