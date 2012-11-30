@@ -58,6 +58,10 @@ module MingleEvents
       def close
         # do nothing
       end
+
+      def external_encoding
+        "UTF-8"
+      end
     end
 
     def entry_map
