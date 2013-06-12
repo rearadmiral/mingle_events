@@ -5,7 +5,7 @@ module MingleEvents
     class PutsPublisher < Processor
       
       def process(event) 
-        puts "Processing event #{event}"
+        event.tap { |event| puts "Processing event #{event}" }
       end
     
     end
